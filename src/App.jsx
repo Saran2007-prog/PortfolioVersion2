@@ -20,7 +20,8 @@ import {
   Wrench,
   Globe,
   Cpu,
-  ArrowUp
+  ArrowUp,
+  Compass
 } from 'lucide-react';
 import './App.css';
 
@@ -62,11 +63,16 @@ const LinkedinIcon = ({ size = 22, ...props }) => (
 
 const App = () => {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
   const [showBackToTop, setShowBackToTop] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [overlayNavOpen, setOverlayNavOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('hero');
   const [toastMessage, setToastMessage] = useState('');
   const [formSubmitted, setFormSubmitted] = useState(false);
+
+  // Custom Cursor Follower Coordinates
+  const [cursorPos, setCursorPos] = useState({ x: -100, y: -100 });
+  const [followerPos, setFollowerPos] = useState({ x: -100, y: -100 });
 
   // Dynamic Typing Effect State
   const roles = ["Full Stack Web Developer", "Competitive Programmer", "GCE Salem CSE Scholar"];
@@ -74,13 +80,61 @@ const App = () => {
   const [currentText, setCurrentText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Kinetic Hero Text Reveal State
+  const [titleRevealed, setTitleRevealed] = useState(false);
+
+  useEffect(() => {
+    // Kinetic reveal trigger after mount
+    const timer = setTimeout(() => setTitleRevealed(true), 150);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Cursor move listener & hover states
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      setCursorPos({ x: e.clientX, y: e.clientY });
+    };
+
+    const handleMouseOver = (e) => {
+      if (e.target.closest('a, button, .skill-tag, .project-card, .contact-card, .overlay-nav-link')) {
+        document.body.classList.add('cursor-hover');
+      } else {
+        document.body.classList.remove('cursor-hover');
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseover', handleMouseOver);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseover', handleMouseOver);
+    };
+  }, []);
+
+  // Smooth lerp for cursor follower
+  useEffect(() => {
+    let animationFrameId;
+
+    const followCursor = () => {
+      setFollowerPos((prev) => ({
+        x: prev.x + (cursorPos.x - prev.x) * 0.18,
+        y: prev.y + (cursorPos.y - prev.y) * 0.18
+      }));
+      animationFrameId = requestAnimationFrame(followCursor);
+    };
+
+    animationFrameId = requestAnimationFrame(followCursor);
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [cursorPos]);
+
   // Typing Effect Hook
   useEffect(() => {
     const targetText = roles[currentRoleIndex];
     let typingSpeed = isDeleting ? 40 : 80;
 
     if (!isDeleting && currentText === targetText) {
-      typingSpeed = 2200; // Pause at full phrase
+      typingSpeed = 2200;
     } else if (isDeleting && currentText === '') {
       setIsDeleting(false);
       setCurrentRoleIndex((prev) => (prev + 1) % roles.length);
@@ -100,10 +154,14 @@ const App = () => {
     return () => clearTimeout(timer);
   }, [currentText, isDeleting, currentRoleIndex]);
 
-  // Scroll detection & active section hook
+  // Scroll progress & section active tracking hook
   useEffect(() => {
     const handleScroll = () => {
       const scrollPos = window.scrollY;
+      const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = totalHeight > 0 ? (scrollPos / totalHeight) * 100 : 0;
+      
+      setScrollProgress(progress);
       setIsScrolled(scrollPos > 40);
       setShowBackToTop(scrollPos > 350);
 
@@ -127,7 +185,18 @@ const App = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Intersection Observer for staggered scroll reveal animations
+  // Keyboard escape listener to close full screen overlay
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && overlayNavOpen) {
+        setOverlayNavOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [overlayNavOpen]);
+
+  // Intersection Observer for scroll reveal animations
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -256,6 +325,19 @@ const App = () => {
 
   return (
     <div className="portfolio-container">
+      {/* Top Scroll Progress Indicator */}
+      <div className="scroll-progress-bar" style={{ width: `${scrollProgress}%` }}></div>
+
+      {/* Custom Cursor Follower */}
+      <div 
+        className="custom-cursor" 
+        style={{ left: `${cursorPos.x}px`, top: `${cursorPos.y}px` }}
+      ></div>
+      <div 
+        className="custom-cursor-follower" 
+        style={{ left: `${followerPos.x}px`, top: `${followerPos.y}px` }}
+      ></div>
+
       {/* Background Ambient Orbs */}
       <div className="bg-orb bg-orb-1"></div>
       <div className="bg-orb bg-orb-2"></div>
@@ -277,23 +359,82 @@ const App = () => {
           </ul>
 
           <button 
-            className="mobile-toggle" 
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle Navigation Menu"
+            className="overlay-trigger-btn"
+            onClick={() => setOverlayNavOpen(true)}
+            aria-label="Open Fullscreen Navigation Overlay"
           >
-            {mobileMenuOpen ? <X size={26} /> : <Menu size={26} />}
+            <Compass size={18} /> Menu
           </button>
         </div>
-
-        {/* Mobile Navigation Drawer */}
-        <div className={`mobile-menu ${mobileMenuOpen ? 'open' : ''}`}>
-          <a href="#about" onClick={() => setMobileMenuOpen(false)} className="nav-link">About</a>
-          <a href="#experience" onClick={() => setMobileMenuOpen(false)} className="nav-link">Experience</a>
-          <a href="#skills" onClick={() => setMobileMenuOpen(false)} className="nav-link">Skills</a>
-          <a href="#projects" onClick={() => setMobileMenuOpen(false)} className="nav-link">Projects</a>
-          <a href="#contact" onClick={() => setMobileMenuOpen(false)} className="nav-link">Contact</a>
-        </div>
       </nav>
+
+      {/* Full-Screen Glass Overlay Navigation (Reference Site Inspired) */}
+      <div className={`fullscreen-overlay ${overlayNavOpen ? 'open' : ''}`}>
+        <button 
+          className="overlay-close-btn"
+          onClick={() => setOverlayNavOpen(false)}
+          aria-label="Close Overlay Menu"
+        >
+          <X size={26} />
+        </button>
+
+        <ul className="overlay-nav-list">
+          <li className="overlay-nav-item">
+            <a 
+              href="#hero" 
+              className="overlay-nav-link"
+              onClick={() => setOverlayNavOpen(false)}
+            >
+              <span className="overlay-nav-num">01</span> Home
+            </a>
+          </li>
+          <li className="overlay-nav-item">
+            <a 
+              href="#about" 
+              className="overlay-nav-link"
+              onClick={() => setOverlayNavOpen(false)}
+            >
+              <span className="overlay-nav-num">02</span> About
+            </a>
+          </li>
+          <li className="overlay-nav-item">
+            <a 
+              href="#experience" 
+              className="overlay-nav-link"
+              onClick={() => setOverlayNavOpen(false)}
+            >
+              <span className="overlay-nav-num">03</span> Experience
+            </a>
+          </li>
+          <li className="overlay-nav-item">
+            <a 
+              href="#skills" 
+              className="overlay-nav-link"
+              onClick={() => setOverlayNavOpen(false)}
+            >
+              <span className="overlay-nav-num">04</span> Skills
+            </a>
+          </li>
+          <li className="overlay-nav-item">
+            <a 
+              href="#projects" 
+              className="overlay-nav-link"
+              onClick={() => setOverlayNavOpen(false)}
+            >
+              <span className="overlay-nav-num">05</span> Projects
+            </a>
+          </li>
+          <li className="overlay-nav-item">
+            <a 
+              href="#contact" 
+              className="overlay-nav-link"
+              onClick={() => setOverlayNavOpen(false)}
+            >
+              <span className="overlay-nav-num">06</span> Contact
+            </a>
+          </li>
+        </ul>
+      </div>
 
       {/* Hero Section */}
       <section id="hero" className="hero-section">
@@ -305,7 +446,12 @@ const App = () => {
                 <span>Available for Tech Opportunities</span>
               </div>
               <h1 className="hero-title">
-                Hi, I'm <span className="gradient-text">Saranstalin S</span>,<br />
+                <span className="text-mask-wrapper">
+                  <span className={`text-mask-item ${titleRevealed ? 'revealed' : ''}`}>Hi, I'm</span>
+                </span>{' '}
+                <span className="text-mask-wrapper">
+                  <span className={`text-mask-item gradient-text ${titleRevealed ? 'revealed' : ''}`} style={{ transitionDelay: '120ms' }}>Saranstalin S</span>
+                </span>,<br />
                 <span className="gradient-text-alt">{currentText}</span>
                 <span className="typing-cursor"></span>
               </h1>

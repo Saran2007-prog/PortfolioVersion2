@@ -85,52 +85,7 @@ body {
   box-shadow: 0 0 12px var(--primary);
 }
 
-/* Custom Cursor Follower (Desktop) */
-@media (pointer: fine) {
-  body {
-    cursor: default;
-  }
-  
-  .custom-cursor {
-    width: 8px;
-    height: 8px;
-    background-color: var(--primary);
-    border-radius: 50%;
-    position: fixed;
-    pointer-events: none;
-    z-index: 9999;
-    transform: translate(-50%, -50%);
-    transition: width 0.2s, height 0.2s, background-color 0.2s;
-    box-shadow: 0 0 10px var(--primary);
-  }
 
-  .custom-cursor-follower {
-    width: 36px;
-    height: 36px;
-    border: 1px solid rgba(16, 185, 129, 0.4);
-    border-radius: 50%;
-    position: fixed;
-    pointer-events: none;
-    z-index: 9998;
-    transform: translate(-50%, -50%);
-    transition: transform 0.12s ease-out, width 0.25s, height 0.25s, border-color 0.25s, background-color 0.25s;
-    background: rgba(16, 185, 129, 0.03);
-  }
-
-  body.cursor-hover .custom-cursor {
-    width: 14px;
-    height: 14px;
-    background-color: var(--secondary);
-    box-shadow: 0 0 15px var(--secondary);
-  }
-
-  body.cursor-hover .custom-cursor-follower {
-    width: 54px;
-    height: 54px;
-    border-color: var(--primary);
-    background: rgba(16, 185, 129, 0.1);
-  }
-}
 
 /* Base Utility Classes */
 .gradient-text {

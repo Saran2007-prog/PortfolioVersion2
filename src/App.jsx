@@ -70,10 +70,6 @@ const App = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [formSubmitted, setFormSubmitted] = useState(false);
 
-  // Custom Cursor Follower Coordinates
-  const [cursorPos, setCursorPos] = useState({ x: -100, y: -100 });
-  const [followerPos, setFollowerPos] = useState({ x: -100, y: -100 });
-
   // Dynamic Typing Effect State
   const roles = ["Full Stack Web Developer", "Competitive Programmer", "GCE Salem CSE Scholar"];
   const [currentRoleIndex, setCurrentRoleIndex] = useState(0);
@@ -84,49 +80,9 @@ const App = () => {
   const [titleRevealed, setTitleRevealed] = useState(false);
 
   useEffect(() => {
-    // Kinetic reveal trigger after mount
     const timer = setTimeout(() => setTitleRevealed(true), 150);
     return () => clearTimeout(timer);
   }, []);
-
-  // Cursor move listener & hover states
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      setCursorPos({ x: e.clientX, y: e.clientY });
-    };
-
-    const handleMouseOver = (e) => {
-      if (e.target.closest('a, button, .skill-tag, .project-card, .contact-card, .overlay-nav-link')) {
-        document.body.classList.add('cursor-hover');
-      } else {
-        document.body.classList.remove('cursor-hover');
-      }
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseover', handleMouseOver);
-
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseover', handleMouseOver);
-    };
-  }, []);
-
-  // Smooth lerp for cursor follower
-  useEffect(() => {
-    let animationFrameId;
-
-    const followCursor = () => {
-      setFollowerPos((prev) => ({
-        x: prev.x + (cursorPos.x - prev.x) * 0.18,
-        y: prev.y + (cursorPos.y - prev.y) * 0.18
-      }));
-      animationFrameId = requestAnimationFrame(followCursor);
-    };
-
-    animationFrameId = requestAnimationFrame(followCursor);
-    return () => cancelAnimationFrame(animationFrameId);
-  }, [cursorPos]);
 
   // Typing Effect Hook
   useEffect(() => {
@@ -328,15 +284,6 @@ const App = () => {
       {/* Top Scroll Progress Indicator */}
       <div className="scroll-progress-bar" style={{ width: `${scrollProgress}%` }}></div>
 
-      {/* Custom Cursor Follower */}
-      <div 
-        className="custom-cursor" 
-        style={{ left: `${cursorPos.x}px`, top: `${cursorPos.y}px` }}
-      ></div>
-      <div 
-        className="custom-cursor-follower" 
-        style={{ left: `${followerPos.x}px`, top: `${followerPos.y}px` }}
-      ></div>
 
       {/* Background Ambient Orbs */}
       <div className="bg-orb bg-orb-1"></div>
